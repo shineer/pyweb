@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>音乐抓取器</title>
+	<meta charset="utf-8"/>
+	<style type="text/css">
+	    body{
+	    	text-align:center;
+	    }
+	    li{
+	    	cursor: pointer;
+	    	list-style-type:none;
+	    	text-align:left;
+	    	padding: 2px;
+	    }
+	    li:hover{
+	    	color: #8fbc8f;
+	    }
+	    p{
+	    	padding: 4px;
+	    	text-align:left;
+	    }
+		.header{
+			margin-top: 36px;
+		}
+		#song_name{
+			width: 40%;
+			font-size: 24px;
+			margin: 0;
+			padding: 6px;
+		}
+		#search{
+			width: 10%;
+			font-size: 24px;
+			margin: 0;
+			padding: 6px;
+			cursor: pointer;
+		}
+		#requst{
+			margin-top: 24px;
+		}
+		#results span{
+			padding: 6px;
+		}
+		#page{
+			cursor: pointer;
+	    	color: #888;
+		}
+		#page:hover{
+	    	color: #8fbc8f;
+		}
+		#songs_div{
+			float:left;
+			width:40%;
+		}
+		#show{
+			float:right;
+			width:56%;
+		}
+	</style>
+	<script type="text/javascript" src="jQuery.js"></script>
+	<script type="text/javascript">
+		var songname;
+		$(document).ready(function($){
+			$("#search").click(function(){
+				songname = $("#song_name").val();
+				if(songname == ""){
+				    alert('歌名不能为空！');
+			    }else{
+			    	loadsomething("11216" + songname)
+                }
+            });
+		});
+		function loadsomething(data){
+            $("#results").html('加载中...');
+			$.getJSON("search.php", {song_name:data},function(results){
+	    	    $("#results").html('');
+	    	    $("#page_div").html('');
+	            $.each(results.songs,function(i,value){
+	            	var liObj = $("<li />");
+	            	liObj.html(value.song_name + "&nbsp;&nbsp;&nbsp;" + value.song_artist + "&nbsp;&nbsp;&nbsp;" + value.song_album);
+	            	liObj.data("song_id",value.song_id);
+	            	$("#results").append(liObj);
+	            });
+	            var pagelength = results.pages.length;
+	            $.each(results.pages,function(i,value){
+	        	    if(i < pagelength - 1){
+	        	    	var spanObj = $("<span />");
+	         	        if(value == '下一页'){
+	         	    	    spanObj.attr("id", "page");
+	         	    	    spanObj.data('page', parseInt(results.pages[pagelength - 1]) + 1);
+	                 	}else if(value == '上一页'){
+	                		spanObj.attr("id", "page");
+	                		spanObj.data('page', parseInt(results.pages[pagelength - 1]) - 1);
+	                	}else if(value == '…'){
+	                		spanObj.attr("id", "page");
+	                		spanObj.data('page', i + 1);
+	                	}else if(i != (pagelength - 2)){
+	                		spanObj.attr("id", "page");
+		            		spanObj.data('page', value);
+		            	   if(value == results.pages[pagelength - 1]){
+		         			    spanObj.css('color', '#222222');
+		         		    	spanObj.css('cursor', '');
+		         			    spanObj.removeAttr("id");
+				            }
+				        }
+				        spanObj.html(value);
+				        $("#results").append(spanObj);
+				    }
+			    });
+			    $("[id=page]").each(function(){ 
+				    $(this).click(function(){ 
+				        loadsomething($(this).data('page') + '1216' + songname);
+				    });
+		        });
+	            $("#results li").click(function(){
+	        	    $("#show").html('');
+	        	    var $lio = $(this);
+                    $.getJSON("showreal.php", {song_id:$(this).data('song_id')},function(results){
+                        $("#show").append("<h3> " + $lio.html() + "</h3>");
+                        $("#show").append("<p>歌曲地址： " + results.song_location + "</p>");
+                        $("#show").append("<p>歌词地址： " + results.song_lyric + "</p>");
+                        $("#show").append("<p>图片地址： " + results.song_pic + "</p>");
+                    });
+		        });
+	        });
+		}
+	</script>
+</head>
+<body>
+	<div class="header">
+		<h2>音乐抓取器&nbsp;&nbsp;&nbsp;&nbsp;by——Jenifly</h2>
+	</div>
+	<div class="content">
+		<input type="text" id="song_name">
+		<input type="button" id="search" value="search">
+		<div id="requst">
+			<div id="songs_div">
+			    <ul id="results"/>
+			</div>
+			<div id="show"></div>
+		</div>
+	</div>
+</body>
+</html>
